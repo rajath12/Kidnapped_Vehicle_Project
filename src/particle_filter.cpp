@@ -1,8 +1,8 @@
 /**
  * particle_filter.cpp
  *
- * Created on: Dec 12, 2016
- * Author: Tiffany Huang
+ * Created on: June
+ * Author: Rajath Rao
  */
 
 #include "particle_filter.h"
@@ -30,7 +30,32 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 0;  // TODO: Set the number of particles
+  num_particles = 100;  // TODO: Set the number of particles
+  particles.resize(num_particles); // adjust to the set number of particles
+  weights.resize(num_particles); // should equal number of particles
+
+  double std_x,std_y,std_theta;
+  // extracting stds for easy readability
+  std_x = std[0];
+  std_y = std[1];
+  std_theta = std[2];
+
+  // creating a Gaussian distribution for the three measurements
+  std::default_random_engine gen;
+  std::normal_distribution<double>dist_x(x,std_x);
+  std::normal_distribution<double>dist_y(y,std_y);
+  std::normal_distribution<double>angle_theta(theta,std_theta);
+
+  // initializing values for all particles
+  for (int i = 0; i<num_particles; ++i){
+    particles[i].id = i;
+    particles[i].x = dist_x(gen);
+    particles[i].y = dist_y(gen);
+    particles[i].theta = angle_theta(gen);
+    particles[i].weight = 1.0;
+    
+    weights[i] = 1.0; // initializing all weights to 1.0
+  }
 
 }
 
@@ -43,7 +68,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
-
+  
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted, 
