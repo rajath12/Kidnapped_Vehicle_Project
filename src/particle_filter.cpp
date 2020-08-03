@@ -30,7 +30,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 100;  // TODO: Set the number of particles
+  num_particles = 100;  // Set the number of particles
   particles.resize(num_particles); // adjust to the set number of particles
   weights.resize(num_particles); // should equal number of particles
 
@@ -148,6 +148,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
+
+
+  // variable for normalizing all weights at the end
+  double sum_weights = 0.0;
+
   for (int i = 0; i < num_particles; ++i){
     double p_x = particles[i].x;
     double p_y = particles[i].y;
@@ -163,11 +168,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       int ex_id = map_landmarks.landmark_list[j].id_i;
 
       // taking into consideration only those landmarks that fall within the sensor range
-      if (fabs(ex_x - p_x) <= sensor_range && fabs(ex_y - p_y) <= sensor_range){
+      if ((fabs(ex_x - p_x) <= sensor_range) && (fabs(ex_y - p_y) <= sensor_range)){
         preds_obs.push_back(LandmarkObs{ex_id,ex_x,ex_y});
       }
     }
-
     // create vector to hold the transformed landmark observations from vehicle to 
     // map coordinates
     vector<LandmarkObs> tranformed_obs;
@@ -210,6 +214,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     // updating the particle weight with new weight
     particles[i].weight *= new_w;
     }
+    // summing all weights
+    sum_weights += particles[i].weight;
+  }
+  // normalizing all weights
+  for (int i = 0; i < particles.size(); ++i){
+    particles[i].weight /= sum_weights;
+    weights[i] = particles[i].weight;
   }
 }
 
@@ -220,16 +231,12 @@ void ParticleFilter::resample() {
    * NOTE: You may find std::discrete_distribution helpful here.
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
-  
+	
   // vector holding resampled new particles
   vector<Particle> new_particles;
 
-  // get all of the current particle weights
-  vector<double> weights;
-  for (int i = 0; i < particles.size(); ++i){
-    weights.push_back(particles[i].weight);
-  }
   std::default_random_engine gen;
+  
   // generate random starting index for resampling wheel
   std::uniform_int_distribution<int> uniintdist(0, num_particles-1);
   auto index = uniintdist(gen);
